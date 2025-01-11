@@ -59,72 +59,72 @@ flags.DEFINE_string("output_data", "data/new_train.tsv",
 
 
 def replace_labels(labels, idx2emotion, mapping_dict, emotion2idx):
-  """Replace old emotions with new emotions.
+    """Replace old emotions with new emotions.
 
-  Args:
-      labels: comma-separated list of ids (for old emotions)
-      idx2emotion: dictionary, mapping old emotion ids to old emotion names
-      mapping_dict: dictionary, with new emotion (str) : new emotions (list of
-        strings) key: value pairs
-      emotion2idx: dictionary, mapping new emotion names to new emotion ids
+    Args:
+        labels: comma-separated list of ids (for old emotions)
+        idx2emotion: dictionary, mapping old emotion ids to old emotion names
+        mapping_dict: dictionary, with new emotion (str) : new emotions (list of
+          strings) key: value pairs
+        emotion2idx: dictionary, mapping new emotion names to new emotion ids
 
-  Returns:
-      comma-separated list of ids for new emotions
-  """
-  split = labels.split(",")
-  new_labels = []
-  for label_idx in split:
-    old_emotion = idx2emotion[int(label_idx)]
-    found = False
-    for new_emotion, v in mapping_dict.items():
-      if old_emotion in v:
-        new_labels.append(str(emotion2idx[new_emotion]))
-        found = True
-        break
-    if not found:
-      new_labels.append(str(emotion2idx[old_emotion]))
-  assert new_labels
-  return ",".join(new_labels)
+    Returns:
+        comma-separated list of ids for new emotions
+    """
+    split = labels.split(",")
+    new_labels = []
+    for label_idx in split:
+        old_emotion = idx2emotion[int(label_idx)]
+        found = False
+        for new_emotion, v in mapping_dict.items():
+            if old_emotion in v:
+                new_labels.append(str(emotion2idx[new_emotion]))
+                found = True
+                break
+        if not found:
+            new_labels.append(str(emotion2idx[old_emotion]))
+    assert new_labels
+    return ",".join(new_labels)
 
 
 def main(_):
 
-  data = pd.read_csv(
-      FLAGS.input, sep="\t", header=None, names=["text", "labels", "id"])
-  emotions = open(FLAGS.emotion_file).read().splitlines() + ["neutral"]
-  idx2emotion = {i: t for i, t in enumerate(emotions)}
+    data = pd.read_csv(
+        FLAGS.input, sep="\t", header=None, names=["text", "labels", "id"])
+    emotions = open(FLAGS.emotion_file).read().splitlines() + ["neutral"]
+    idx2emotion = {i: t for i, t in enumerate(emotions)}
 
-  with open(FLAGS.mapping_dict) as f:
-    mapping_dict = json.loads(f.read())
+    with open(FLAGS.mapping_dict) as f:
+        mapping_dict = json.loads(f.read())
 
-  new_emotions = list(mapping_dict.keys())
+    new_emotions = list(mapping_dict.keys())
 
-  # Find those emotions that are not in the mapping dictionary
-  not_found = []
-  for t in emotions:
-    found = False
-    for _, v in mapping_dict.items():
-      if t in v:
-        found = True
-        break
-    if not found:
-      print("%s is not found" % t)
-      not_found.append(t)
+    # Find those emotions that are not in the mapping dictionary
+    not_found = []
+    for t in emotions:
+        found = False
+        for _, v in mapping_dict.items():
+            if t in v:
+                found = True
+                break
+        if not found:
+            print("%s is not found" % t)
+            not_found.append(t)
 
-  print("New emotions:")
-  new_emotions = sorted(new_emotions + not_found)
-  print(new_emotions)
-  emotion2idx = {t: i for i, t in enumerate(new_emotions)}
+    print("New emotions:")
+    new_emotions = sorted(new_emotions + not_found)
+    print(new_emotions)
+    emotion2idx = {t: i for i, t in enumerate(new_emotions)}
 
-  data["labels"] = data["labels"].apply(
-      replace_labels, args=(idx2emotion, mapping_dict, emotion2idx))
+    data["labels"] = data["labels"].apply(
+        replace_labels, args=(idx2emotion, mapping_dict, emotion2idx))
 
-  with open(FLAGS.output_emotion_file, "w") as f:
-    f.write("\n".join(new_emotions))
+    with open(FLAGS.output_emotion_file, "w") as f:
+        f.write("\n".join(new_emotions))
 
-  data.to_csv(
-      FLAGS.output_data, sep="\t", encoding="utf-8", header=False, index=False)
+    data.to_csv(
+        FLAGS.output_data, sep="\t", encoding="utf-8", header=False, index=False)
 
 
 if __name__ == "__main__":
-  app.run(main)
+    app.run(main)
